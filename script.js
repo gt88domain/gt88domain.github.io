@@ -9,18 +9,12 @@ function splitText() {
     const reader = new FileReader();
     reader.onload = function(e) {
         const text = e.target.result;
-        const words = text.split(/\s+/);
-        let part = '';
-        let partNum = 1;
-        
-        for (let i = 0; i < words.length; i++) {
-            part += words[i] + ' ';
-            if ((i + 1) % 2000 === 0 || i === words.length - 1) {
-                createDownloadLink(part, `Part_${partNum}.txt`);
-                part = ''; // Reset part
-                partNum++;
-            }
-        }
+        // Improved splitting logic to handle various languages
+        const parts = text.match(/[\s\S]{1,2000}(?=\s|$)|[\s\S]+/g);
+
+        parts.forEach((part, index) => {
+            createDownloadLink(part, `Part_${index + 1}.txt`);
+        });
     };
     reader.readAsText(file);
 }
@@ -30,8 +24,23 @@ function createDownloadLink(text, filename) {
     downloadLink.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
     downloadLink.download = filename;
     downloadLink.textContent = `Download ${filename}`;
-    
+    downloadLink.style.display = 'block'; // Makes each link appear on a new line
+
     const container = document.getElementById('downloadLinks');
     container.appendChild(downloadLink);
-    container.appendChild(document.createElement('br'));
+}
+
+// Note: Due to browser restrictions, this button won't download all files at once
+// but will guide users to manually click each link.
+function createDownloadAllButton() {
+    const downloadAllButton = document.createElement('button');
+    downloadAllButton.textContent = 'Click Each Link to Download All Parts';
+    downloadAllButton.onclick = function() {
+        document.querySelectorAll('#downloadLinks a').forEach(link => {
+            // Note: Directly calling `link.click()` for all links might not work due to browser restrictions
+            console.log(`Please click: ${link.getAttribute('download')}`);
+        });
+    };
+
+    document.body.appendChild(downloadAllButton);
 }
